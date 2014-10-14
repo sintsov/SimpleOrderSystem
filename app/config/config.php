@@ -7,13 +7,13 @@
 
 $config = array(
     'datebases' => array(
-        'dbMaster1' => array(
+        'db' => array(
             'host' => 'localhost',
-            'username' => '',
-            'password' => '',
-            'dbname' => ''
+            'username' => 'vk',
+            'password' => 'r9VS9L38vExp6YVQ',
+            'dbname' => 'vk'
         ),
-        'dbMaster2' => array(
+        'db2' => array(
             'host' => 'localhost',
             'username' => '',
             'password' => '',

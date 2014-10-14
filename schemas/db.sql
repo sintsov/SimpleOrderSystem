@@ -10,6 +10,7 @@ CREATE TABLE `users` (
   `email` varchar(255) NOT NULL,
   `password` char(60) NOT NULL,
   `avatar` varchar(50) DEFAULT NULL,
+  `role_id` tinyint unsigned NOT NULL,
   `account_id` int(10) unsigned DEFAULT NULL,
   `time_visited` int(18) unsigned DEFAULT NULL,
   `created_at` int(18) unsigned DEFAULT NULL,

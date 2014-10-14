@@ -7,8 +7,7 @@
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 
-$documentRoot = realpath(__DIR__ . '/../');
-require_once $documentRoot . '/app/config/config.php';
+require_once realpath(__DIR__ . '/../app/config/init.php');
 
 ?>
 <!DOCTYPE html>
@@ -32,13 +31,13 @@ require_once $documentRoot . '/app/config/config.php';
 				<!-- sidebar -->
 				<div class="column col-sm-3" id="sidebar">
 					<a class="logo" href="/">B</a>
-                    <? require_once $documentRoot . '/public/layout/auth.php'; ?>
-					<!--<ul class="nav">
-						<li class="active"><a href="#auth"></a>
-						</li>
-						<li><a href="#reg"></a>
-						</li>
-					</ul> -->
+
+                    <? if(!isAuth()){
+                        require_once $documentRoot . '/public/layout/auth.php';
+                    } else {
+                        require_once $documentRoot . '/public/layout/profile.php';
+                    }?>
+
 					<ul class="nav hidden-xs" id="sidebar-footer">
 						<li>
 						  <a href=""><h3>Simple Order System</h3>Made with <i class="glyphicon glyphicon-heart-empty"></i> by Sintsov Roman</a>

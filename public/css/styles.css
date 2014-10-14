@@ -130,6 +130,15 @@ small.text-muted {
   font-family:courier,courier-new,monospace;
 }
 
+.alert-danger {
+    font-size: 12px;
+}
+.alert-danger {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+    color: #ffffff;
+}
+
 /* auth panel block */
 
 #auth-panel{

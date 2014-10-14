@@ -13,18 +13,22 @@
     </ul>
     <div class="tab-content">
         <div class="tab-pane fade" id="login">
-            <form id="form-sigin" method="post">
-            <div class="form-group">
-                <input placeholder="Email" class="form-control" name="email" id="email" value="" type="text">
-            </div>
-            <div class="form-group">
-                <input placeholder="Password" class="form-control" name="password" id="password" value="" type="password">
-            </div>
-            <input class="btn btn-success btn-lg" value="Sign In" type="submit">
+            <form action="" id="form-signin" method="post">
+                <div class="alert alert-danger" id="form-signin-alert" style="display: none;"></div>
+                <input type="hidden" name="action" value="/user/signin/" />
+                <div class="form-group">
+                    <input placeholder="Email" class="form-control" name="email" id="email" value="" type="text">
+                </div>
+                <div class="form-group">
+                    <input placeholder="Password" class="form-control" name="password" id="password" value="" type="password">
+                </div>
+                <input class="btn btn-success btn-lg" value="Sign In" type="submit">
             </form>
         </div>
         <div class="tab-pane fade" id="join">
-            <form id="form-join" method="post">
+            <form action="" id="form-join" method="post">
+                <div class="alert alert-danger" id="form-join-alert" style="display: none;"></div>
+                <input type="hidden" name="action" value="/user/join/" />
                 <label>Choose what you are doing:</label>
                 <div class="form-group">
                     <div class="btn-group btn-group-justified" data-toggle="buttons">
