@@ -44,3 +44,46 @@ CREATE TABLE `system_account` (
   `balance` decimal(7, 2) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+DROP TABLE IF EXISTS `orders`;
+CREATE TABLE `orders` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `status` tinyint unsigned NOT NULL,
+  `customer` int(10) unsigned NOT NULL,
+  `employess` int(10) unsigned DEFAULT NULL,
+  `cost` decimal(7, 2) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `text` varchar(4096) NOT NULL,
+  `created_at` int(18) unsigned DEFAULT NULL,
+  `modified_at` int(18) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY (`status`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+DROP TABLE IF EXISTS `order_status`;
+CREATE TABLE `order_status` (
+  `id` tinyint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255),
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+DROP TABLE IF EXISTS `transactions`;
+CREATE TABLE `transactions` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `credit`int(10) unsigned NOT NULL,
+  `debit` int(10) unsigned NOT NULL,
+  `amount` decimal(7, 2) NOT NULL,
+  `date` int(18) unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- fot external transaction (example: payment systems)
+DROP TABLE IF EXISTS `external_transactions`;
+CREATE TABLE `external_transactions` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `credit` int(10) unsigned NOT NULL,
+  `payment_system` int(10) unsigned NOT NULL,
+  `amount` decimal(7, 2) NOT NULL,
+  `date` int(18) unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;

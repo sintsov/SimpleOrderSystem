@@ -69,3 +69,10 @@ function validateEmailAddress($value){
     else
         return false;
 }
+
+function validateMoney($cost){
+    if (is_numeric($cost)) {
+        return true;
+    }
+    return false;
+}

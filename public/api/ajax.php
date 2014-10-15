@@ -20,6 +20,13 @@ if (!empty($_POST['action'])) {
             break;
         case '/user/signout/':
             logout();
+            message(array(
+                'status' => 'success',
+                'message' => 'User is sing out'
+            ));
+            break;
+        case '/user/payment/':
+            paymentUser();
             break;
     }
 } else {

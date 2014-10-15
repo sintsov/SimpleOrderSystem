@@ -14,7 +14,7 @@
     <div class="tab-content">
         <div class="tab-pane fade" id="login">
             <form action="" id="form-signin" method="post">
-                <div class="alert alert-danger" id="form-signin-alert" style="display: none;"></div>
+                <div class="alert alert-danger error" id="form-signin-alert" style="display: none;"></div>
                 <input type="hidden" name="action" value="/user/signin/" />
                 <div class="form-group">
                     <input placeholder="Email" class="form-control" name="email" id="email" value="" type="text">
@@ -27,7 +27,7 @@
         </div>
         <div class="tab-pane fade" id="join">
             <form action="" id="form-join" method="post">
-                <div class="alert alert-danger" id="form-join-alert" style="display: none;"></div>
+                <div class="alert alert-danger error" id="form-join-alert" style="display: none;"></div>
                 <input type="hidden" name="action" value="/user/join/" />
                 <label>Choose what you are doing:</label>
                 <div class="form-group">

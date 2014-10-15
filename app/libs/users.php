@@ -34,9 +34,12 @@ function userJoin(){
                             ));
                             setUserSession(
                                 array(
+                                    'user_id' => mysqli_insert_id($db),
                                     'name' => $fields['name'],
                                     'email' => $fields['email'],
-                                    'role_id' => $fields['role']
+                                    'role_id' => $fields['role'],
+                                    'acount_id' => null,
+                                    'balance' => 0,
                                 )
                             );
                         } else {
@@ -67,7 +70,6 @@ function userSignin(){
     if (requiredFields($allowfieldList) === true){
         $fieldList = prepareData($allowfieldList);
         $hash = getUserHash($fieldList['email']);
-        var_dump($hash);
         if ($hash && password_verify($fieldList['password'], $hash)) {
             $query = sprintf("SELECT * FROM users WHERE email='%s'", mysqli_real_escape_string($db, $fieldList['email']));
             $result = mysqli_query($db, $query);
@@ -79,9 +81,12 @@ function userSignin(){
                     ));
                     setUserSession(
                         array(
+                            'user_id' => $row['id'],
                             'name' => $row['name'],
                             'email' => $row['email'],
-                            'role_id' => $row['role_id']
+                            'role_id' => $row['role_id'],
+                            'acount_id' => $row['account_id'],
+                            'balance' => is_null($row['account_id']) ? $row['account_id'] : getBalanceByAccountId($row['account_id']),
                         )
                     );
                 }
@@ -94,6 +99,13 @@ function userSignin(){
     } else {
         error('All fields is required');
     }
+}
+
+function isCustomer(){
+    return (getUserInfo('role_id') == 1) ? true : false;
+}
+
+function getBalanceByAccountId($accountId){
 }
 
 function getUserHash($email){
@@ -121,7 +133,8 @@ function getUserSession(){
 function getUserInfo($key){
     if (getUserSession()){
         return $_SESSION['auth'][$key];
-    }
+    } else
+        return false;
 }
 
 function isAuth(){
@@ -158,4 +171,63 @@ function isUserExists($email){
  */
 function getHashPassword($password, $cost = 10){
     return password_hash($password, PASSWORD_BCRYPT, array('cost' => $cost, 'salt' => mcrypt_create_iv(22, MCRYPT_DEV_URANDOM)));
+}
+
+function paymentUser(){
+    global $db;
+    $userId = getUserInfo('user_id');
+    if (isAuth() && $userId){
+        $allowfieldList = array('payment_id', 'total');
+        if (requiredFields($allowfieldList) === true){
+            $fieldList = prepareData($allowfieldList);
+            if (validateMoney($fieldList['total'])){
+                $fields = prepareSQLData($fieldList);
+                // transaction
+                // set autocommit to off
+                mysqli_autocommit($db, false);
+
+                // if don't have account need created
+                if (is_null(getUserInfo('account_id')){
+                    $query = sprintf("INSERT INTO accounts (user_id, balance) VALUES ('%s', '%s')",  $userId, $fields['total']);
+                    $result = mysqli_query($db, $query);
+
+                    if ($result !== true){
+                        error('Datebase query error: ' . mysqli_error($db));
+                        die;
+                    }
+
+                    $accountId = mysqli_insert_id($db)
+                } else {
+                    $accountId = getUserInfo('account_id');
+                }
+
+                // first update or insert user account
+                $query = "UPDATE users SET account_id = '" . $accountId . "'";
+                $result = mysqli_query($db, $query);
+
+                if ($result !== true){
+                    error('Datebase query error: ' . mysqli_error($db));
+                    die;
+                }
+
+                // transaction log (double entry)
+                // ....
+
+                if (mysqli_commit($db)) {
+                    message(array(
+                        'status' => 'success',
+                        'message' => 'User successfully create'
+                    ));
+                } else {
+                    error('Transaction commit failed');
+                }
+            } else {
+                error('Enter the amount of payment');
+            }
+        } else {
+            error('All fields is required');
+        }
+    } else {
+        error('Problems with user identification');
+    }
 }

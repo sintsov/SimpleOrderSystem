@@ -65,7 +65,9 @@ require_once realpath(__DIR__ . '/../app/config/init.php');
 								<h3>List of role-playing video game</h3>
                                 <h4><span class="label label-default">vk.com</span></h4>
                                 <p>This is a comprehensive index of commercial role-playing video games, sorted chronologically by year. Information regarding date of release, developer, publisher, operating system, sub-genre and notability is provided where available. The table can be sorted by clicking on the small boxes next to the column headings. This list does not include roguelikes, MUDs or MMORPGs. It does include action RPGs and tactical RPGs.</p>
-                                <p><button type="button" class="btn btn-primary">Make It!</button></p>
+                                <? if (isAuth() && !isCustomer()){?>
+                                    <p><button type="button" class="btn btn-primary">Make It!</button></p>
+                                <?}?>
 								<small class="text-muted">1 hour ago</small>
 								</h4>
 							  </div>
@@ -77,20 +79,7 @@ require_once realpath(__DIR__ . '/../app/config/init.php');
                             <div class="row divider">
                                 <div class="col-sm-12"><hr></div>
                             </div>
-
-                            <div class="row">
-                                <div class="col-sm-10">
-                                    <h3>Outline of Alaska</h3>
-                                    <h4><span class="label label-default">mainsource.ru</span></h4>
-                                    <p>Alaska – most extensive, northernmost, westernmost, highest, second newest, and least densely populated of the 50 states of the United States of America. Alaska occupies the westernmost extent of the Americas, bordering British Columbia and the Yukon, and is detached from the other 49 states. The summit of Mount McKinley (Denali) at 6194 meters is the highest point of North America.</p>
-                                    <p><button type="button" class="btn btn-primary">Make It!</button></p>
-                                    <small class="text-muted">1 hour ago</small>
-                                    </h4>
-                                </div>
-                                <div class="col-sm-2">
-                                    <a href="#" class="pull-right"><img src="http://api.randomuser.me/portraits/thumb/women/64.jpg" class="img-circle"></a>
-                                </div>
-                            </div><!-- /orders -->
+                            <!-- /orders -->
 
 						</div><!-- /col-9 -->
 					</div><!-- /padding -->

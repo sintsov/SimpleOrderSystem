@@ -140,11 +140,27 @@ small.text-muted {
 }
 
 /* auth panel block */
-
 #auth-panel{
     margin: 15px;
 }
 
-#auth-panel .tab-pane{
+#left-menu-profile{
+    margin-bottom: 15px;
+}
+.tab-pane{
     padding-top: 20px;
+}
+#profile-logout-button{
+    position: absolute; top:15px; right:30px;
+}
+#text {
+    resize: none;
+}
+#amount{
+    font-size: 16px;
+}
+
+.alert-disclemer{
+    background-color: #222222;
+    font-size: 12px;
 }
