@@ -10,51 +10,40 @@
  */
 function createOrder(){
     global $db;
-    $allowfieldList = array('name', 'email', 'password', 'confirmPassword', 'role');
-    if (requiredFields($allowfieldList) === true){
+    $userId = getUserInfo('user_id');
+    if (isAuth() && $userId) {
+        $allowfieldList = array('title', 'cost', 'text');
+        if (requiredFields($allowfieldList) === true) {
             $fieldList = prepareData($allowfieldList);
-            if (validateEmailAddress($fieldList['email'])){
-                if ($fieldList['password'] == $fieldList['confirmPassword']) {
-                    if (!isUserExists($fieldList['email'])){
-                        $fields = prepareSQLData($fieldList);
-                        $query = sprintf("INSERT INTO users (name, email, password, role_id, time_visited, created_at)
+            if (validateMoney($fieldList['cost'])) {
+                $fields = prepareSQLData($fieldList);
+
+                $query = sprintf("INSERT INTO orders (status, customer, cost, title, text, created_at)
                                           VALUES ('%s', '%s', '%s', '%s', '%s', '%s')",
-                            $fields['name'],
-                            $fields['email'],
-                            getHashPassword($fields['password']),
-                            $fields['role'],
-                            time(),
-                            time()
-                        );
-                        $result = mysqli_query($db, $query);
-                        if ($result === true){
-                            message(array(
-                                'status' => 'success',
-                                'message' => 'User successfully create'
-                            ));
-                            setUserSession(
-                                array(
-                                    'name' => $fields['name'],
-                                    'email' => $fields['email'],
-                                    'role_id' => $fields['role']
-                                )
-                            );
-                        } else {
-                            error('Datebase query error: ' . mysqli_error($db));
-                        }
-                    } else {
-                        error('User with this email already exists');
-                    }
+                    1,
+                    $userId,
+                    $fields['cost'],
+                    $fields['title'],
+                    $fields['text'],
+                    time()
+                );
+                $result = mysqli_query($db, $query);
+                if ($result === true) {
+                    message(array(
+                        'status' => 'success',
+                        'message' => 'Order successfully create'
+                    ));
                 } else {
-                    error('The passwords do not match');
+                    error('Datebase query error: ' . mysqli_error($db));
                 }
             } else {
-                error('The e-mail is not valid');
+                error('Enter the amount of payment');
             }
-    } else if (!isset($_POST['role'])){
-        error('Need choose your role: Cutsomer or Employee');
+        } else {
+            error('All fields is required');
+        }
     } else {
-        error('All fields is required');
+        error('Problems with user identification');
     }
 }
 
@@ -63,41 +52,131 @@ function createOrder(){
  */
 function makeOrder(){
     global $db;
-    $allowfieldList = array('email', 'password');
-    if (requiredFields($allowfieldList) === true){
-        $fieldList = prepareData($allowfieldList);
-        $hash = getUserHash($fieldList['email']);
-        if ($hash && password_verify($fieldList['password'], $hash)) {
-            $query = sprintf("SELECT * FROM users WHERE email='%s'", mysqli_real_escape_string($db, $fieldList['email']));
-            $result = mysqli_query($db, $query);
-            if ($result) {
-                while ($row = mysqli_fetch_assoc($result)) {
+    $userId = getUserInfo('user_id');
+    if (isAuth() && $userId) {
+        $allowfieldList = array('order-id');
+        if (requiredFields($allowfieldList) === true) {
+            $fieldList = prepareData($allowfieldList);
+            if (validateMoney($fieldList['cost'])) {
+                $fields = prepareSQLData($fieldList);
+
+                $order = getOrder($fields['order-id']);
+
+                if (!$order){
+                    error('Order not found');
+                    die;
+                }
+
+                // transaction
+                // set autocommit to off
+                mysqli_autocommit($db, false);
+
+                // update order
+                $query = "UPDATE orders SET employess='" . $userId . "', status='2', modified_at='" . time() . "'
+                            WHERE id='" . $fields['order-id'] . "'";
+
+                sqlQuery($db, $query);
+
+                // TODO: transaction log (double entry)
+                // ....
+
+                $transactionID = 1;
+
+                if (!isset($config['application']['commission'])){
+                    error('Not set system comission');
+                    die;
+                }
+                $comission = $order['cost']*$config['application']['commission'];
+                $cost = $order['cost'] - $comission;
+
+                // update balance customer
+                $query = "UPDATE accounts AS a JOIN (SELECT * FROM accounts WHERE user_id = '" . $order['customer'] . "') AS b
+                            SET a.balance = b.balance-". $order['cost'] ." WHERE a.user_id = '" . $order['customer'] . "'";
+                sqlQuery($db, $query);
+
+                // update balance employee
+                $query = "UPDATE accounts AS a JOIN (SELECT * FROM accounts WHERE user_id = '" . $userId . "') AS b
+                            SET a.balance = b.balance+". $cost ." WHERE a.user_id = '" . $userId . "'";
+                sqlQuery($db, $query);
+
+                // system comission
+                $query = "INSERT INTO system_account (amount, transaction_id) VALUES ('" . $comission . "', '" . $transactionID . "')";
+                sqlQuery($db, $query);
+
+                // commit
+                if (mysqli_commit($db)) {
                     message(array(
                         'status' => 'success',
-                        'message' => 'User successfully authorization'
+                        'message' => 'Order successfully create'
                     ));
-                    setUserSession(
-                        array(
-                            'name' => $row['name'],
-                            'email' => $row['email'],
-                            'role_id' => $row['role_id']
-                        )
-                    );
+                } else {
+                    error('Datebase query error: ' . mysqli_error($db));
                 }
             } else {
-                error('Datebase query error: ' . mysqli_error($db));
+                error('Enter the amount of payment');
             }
         } else {
-            error('Invalid email or password');
+            error('All fields is required');
         }
     } else {
-        error('All fields is required');
+        error('Problems with user identification');
     }
 }
 
 /**
  * List of the order
  */
-function orderList(){
+function orderList($lastId = 0, $limit = 100){
+    global $db;
+    global $documentRoot;
 
+    // select only new orders
+    if ($lastId > 0) {
+       //
+    } else {
+        $query = "SELECT id, customer, cost, title, text, created_at FROM orders WHERE status='1' ORDER BY id DESC LIMIT " . $limit;
+        $result = mysqli_query($db, $query);
+
+        if (!$result) {
+            error('Datebase query error: ' . mysqli_error($db));
+            die;
+        }
+
+        $orders = array();
+        while ($row = mysqli_fetch_assoc($result)){
+            $orders[] = $row;
+        }
+
+        if (count($orders) == 0) {
+            error('A single order is not created yet');
+            die;
+        }
+        ob_start();
+
+        require_once $documentRoot . '/public/layout/orders.php';
+
+        $html = ob_get_clean();
+        ob_end_clean();
+
+        message(array(
+            'status' => 'success',
+            'message' => 'A list of orders received',
+            'data' => array(
+                'html' => $html,
+                'count' => count($orders)
+            )
+        ));
+    }
+}
+
+function getOrder($orderId){
+    global $db;
+
+    $query = sprintf("SELECT * FROM orders WHERE id='%s'", mysqli_real_escape_string($db, $orderId));
+    $result = mysqli_query($db, $query);
+    while ($row = mysqli_fetch_assoc($result)) {
+        return $row;
+    }
+
+    return false;
 }

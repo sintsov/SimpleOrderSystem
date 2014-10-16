@@ -26,6 +26,7 @@ CREATE TABLE `users_role` (
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+-- Denormolization
 DROP TABLE IF EXISTS `accounts`;
 CREATE TABLE `accounts` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -41,7 +42,6 @@ CREATE TABLE `system_account` (
   `id` tinyint unsigned NOT NULL AUTO_INCREMENT,
   `amount` decimal(7, 2) NOT NULL,
   `transaction_id` int(10) unsigned,
-  `balance` decimal(7, 2) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 

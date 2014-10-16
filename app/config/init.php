@@ -10,6 +10,7 @@ session_start();
 $documentRoot = realpath(__DIR__ . '/../../');
 require_once 'config.php';
 require_once $documentRoot . '/app/libs/users.php';
+require_once $documentRoot . '/app/libs/orders.php';
 require_once $documentRoot . '/app/libs/utils.php';
 
 if (!empty($config)) {

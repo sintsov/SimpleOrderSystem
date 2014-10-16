@@ -28,6 +28,15 @@ if (!empty($_POST['action'])) {
         case '/user/payment/':
             paymentUser();
             break;
+        case '/user/createOrder/':
+            createOrder();
+            break;
+        case '/order/list/':
+            orderList();
+            break;
+        case '/order/makeit/':
+            makeOrder();
+            break;
     }
 } else {
     error('Please provide url');

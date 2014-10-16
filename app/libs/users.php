@@ -38,7 +38,7 @@ function userJoin(){
                                     'name' => $fields['name'],
                                     'email' => $fields['email'],
                                     'role_id' => $fields['role'],
-                                    'acount_id' => null,
+                                    'account_id' => null,
                                     'balance' => 0,
                                 )
                             );
@@ -85,7 +85,7 @@ function userSignin(){
                             'name' => $row['name'],
                             'email' => $row['email'],
                             'role_id' => $row['role_id'],
-                            'acount_id' => $row['account_id'],
+                            'account_id' => $row['account_id'],
                             'balance' => is_null($row['account_id']) ? $row['account_id'] : getBalanceByAccountId($row['account_id']),
                         )
                     );
@@ -106,6 +106,15 @@ function isCustomer(){
 }
 
 function getBalanceByAccountId($accountId){
+    global $db;
+    if (is_numeric($accountId)) {
+        $query = "SELECT balance FROM accounts WHERE id='" . $accountId . "'";
+        $result = mysqli_query($db, $query);
+        while ($row = mysqli_fetch_assoc($result)) {
+            return $row['balance'];
+        }
+    }
+    return false;
 }
 
 function getUserHash($email){
@@ -133,6 +142,14 @@ function getUserSession(){
 function getUserInfo($key){
     if (getUserSession()){
         return $_SESSION['auth'][$key];
+    } else
+        return false;
+}
+
+function setUserInfo($key, $value){
+    if (getUserSession()){
+        $_SESSION['auth'][$key] = $value;
+        return true;
     } else
         return false;
 }
@@ -187,36 +204,47 @@ function paymentUser(){
                 mysqli_autocommit($db, false);
 
                 // if don't have account need created
-                if (is_null(getUserInfo('account_id')){
+                if (is_null(getUserInfo('account_id'))){
+                    // create new account for user and set balance
                     $query = sprintf("INSERT INTO accounts (user_id, balance) VALUES ('%s', '%s')",  $userId, $fields['total']);
-                    $result = mysqli_query($db, $query);
+                    sqlQuery($db, $query);
 
-                    if ($result !== true){
-                        error('Datebase query error: ' . mysqli_error($db));
-                        die;
-                    }
+                    $accountId = mysqli_insert_id($db);
 
-                    $accountId = mysqli_insert_id($db)
+                    // associate a user with his account
+                    $query = "UPDATE users SET account_id = '" . $accountId . "', modified_at = '" . time() . "'
+                                    WHERE id = '" . $userId . "'";
+                    sqlQuery($db, $query);
+
+                    $totalBalance = $fields['total'];
+                    // save in session user balance and account id
+                    //TODO: i think make one function to update props user
+                    setUserInfo('account_id', $accountId);
+                    setUserInfo('balance', $totalBalance);
+
                 } else {
                     $accountId = getUserInfo('account_id');
+                    $balance = getUserInfo('balance');
+                    $totalBalance = $balance + $fields['total'];
+
+                    // update balance user
+                    $query = "UPDATE accounts SET balance = '" . $totalBalance . "' WHERE user_id = '" . $userId . "'";
+                    sqlQuery($db, $query);
+
+                    $totalBalance = getBalanceByAccountId($accountId);
+                    // save in session user balance
+                    setUserInfo('balance', $totalBalance);
                 }
 
-                // first update or insert user account
-                $query = "UPDATE users SET account_id = '" . $accountId . "'";
-                $result = mysqli_query($db, $query);
-
-                if ($result !== true){
-                    error('Datebase query error: ' . mysqli_error($db));
-                    die;
-                }
-
-                // transaction log (double entry)
+                // TODO: transaction log (double entry)
                 // ....
+
 
                 if (mysqli_commit($db)) {
                     message(array(
                         'status' => 'success',
-                        'message' => 'User successfully create'
+                        'message' => 'Payment was successful',
+                        'data' => array('amount' => $totalBalance)
                     ));
                 } else {
                     error('Transaction commit failed');

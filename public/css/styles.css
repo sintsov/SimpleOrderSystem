@@ -111,7 +111,8 @@ h1,h2,h3 {
   background-color:transparent;
 }
 .label-default {
-  background-color:#dddddd;
+  /*background-color:#dddddd;*/
+  background-color: #777;
 }
 .page-header {
   margin-top: 55px;
@@ -136,6 +137,12 @@ small.text-muted {
 .alert-danger {
     background-color: #e74c3c;
     border-color: #e74c3c;
+    color: #ffffff;
+}
+
+.alert-info{
+    background-color: #57799e;
+    border-color: #57799e;
     color: #ffffff;
 }
 
