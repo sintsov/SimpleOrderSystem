@@ -206,10 +206,11 @@ function paymentUser(){
                 // if don't have account need created
                 if (is_null(getUserInfo('account_id'))){
                     // create new account for user and set balance
-                    $query = sprintf("INSERT INTO accounts (user_id, balance) VALUES ('%s', '%s')",  $userId, $fields['total']);
-                    sqlQuery($db, $query);
-
-                    $accountId = mysqli_insert_id($db);
+                    $accountId = createNewAccount($userId, $fields['total']);
+                    if ($accountId === false){
+                        error('Datebase query error: ' . mysqli_error($db));
+                        die;
+                    }
 
                     // associate a user with his account
                     $query = "UPDATE users SET account_id = '" . $accountId . "', modified_at = '" . time() . "'
@@ -217,10 +218,6 @@ function paymentUser(){
                     sqlQuery($db, $query);
 
                     $totalBalance = $fields['total'];
-                    // save in session user balance and account id
-                    //TODO: i think make one function to update props user
-                    setUserInfo('account_id', $accountId);
-                    setUserInfo('balance', $totalBalance);
 
                 } else {
                     $accountId = getUserInfo('account_id');
@@ -232,8 +229,6 @@ function paymentUser(){
                     sqlQuery($db, $query);
 
                     $totalBalance = getBalanceByAccountId($accountId);
-                    // save in session user balance
-                    setUserInfo('balance', $totalBalance);
                 }
 
                 // TODO: transaction log (double entry)
@@ -241,11 +236,18 @@ function paymentUser(){
 
 
                 if (mysqli_commit($db)) {
+
+                    // save in session user balance and account id
+                    // TODO: i think make one function to update props user
+                    setUserInfo('account_id', $accountId);
+                    setUserInfo('balance', $totalBalance);
+
                     message(array(
                         'status' => 'success',
                         'message' => 'Payment was successful',
-                        'data' => array('amount' => $totalBalance)
+                        'data' => array('amount' => getPrice($totalBalance))
                     ));
+
                 } else {
                     error('Transaction commit failed');
                 }
@@ -258,4 +260,21 @@ function paymentUser(){
     } else {
         error('Problems with user identification');
     }
+}
+
+/**
+ * Create new account for user and set balance
+ * @param int $userId user identificator
+ * @param float|int $balance balance
+ * @return bool|int|string account id, or false is create fail
+ */
+function createNewAccount($userId, $balance){
+    global $db;
+
+    $query = sprintf("INSERT INTO accounts (user_id, balance) VALUES ('%s', '%s')",  $userId, $balance);
+    $result = mysqli_query($db, $query);
+    if ($result !== true){
+        return false;
+    } else
+        return mysqli_insert_id($db);
 }

@@ -21,6 +21,6 @@ $config = array(
         ),
     ),
     'application' => array(
-        'commission' => '0.3'
+        'commission' => '0.03'
     )
 );

@@ -55,6 +55,7 @@ require_once realpath(__DIR__ . '/../app/config/init.php');
                         <!-- content -->
 
                         <div class="col-sm-12" id="orders">
+                            <div>
                             <div class="page-header text-muted">
                                 Orders
                             </div>
@@ -64,9 +65,7 @@ require_once realpath(__DIR__ . '/../app/config/init.php');
                         <div class="row">
                             <div id="order-list">
 
-
                             </div><!-- /orders -->
-
                         </div><!-- /col-9 -->
                     </div><!-- /padding -->
                 </div>

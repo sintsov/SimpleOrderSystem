@@ -42,11 +42,30 @@ var orderList = function (){
         dataType: 'json',
         success: function (response) {
             if (response.status == 'success') {
-                $('#order-list').html(response.data.html)
-            } else if (response.status == 'error'){
-               // error
+                $('#order-list').html(response.data.html);
+
+                /*var width = $('#order-list').width();
+                $('#scroll').css('width', width).css('height', $('#order-list').height());
+                $('#order-list').css('width', width+18).css('height', $('#order-list').height());
+                $('#order-list').bind('scroll', function() {
+                    console.log(1);
+                    if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight){
+                        alert('end reached');
+                    }
+                })*/
+
+                /*$(document).on('mousewheel', function (event) {
+                    var $this = $(this);
+                    if(event.originalEvent.wheelDelta / 120 < 0) {
+                        console.log($('#order-list').height() + ' ' + $this.offset() + ' ' + event.pageY );
+                    }
+                    //var bottom = $this.offset().top + $this.outerHeight();
+
+                    //if(e.pageY >= bottom) alert("BOTTOM");
+                });*/
             } else {
-                // unknown response
+                // error & unknown response
+                swal('Oops...', "Something went wrong! Try later", "error");
             }
         }
     });
@@ -59,13 +78,15 @@ var makeIt = function (form){
         data: $(form).serialize(),
         dataType: 'json',
         success: function (response) {
-            if (result.status == 'success'){
-                var data = result.data;
-                swal('Congratulation!', result.message, "success");
+            if (response.status == 'success'){
+                var data = response.data;
+                if (parseInt(data.amount) > 0) {
+                    $('#amount').text(data.amount);
+                    swal('Congratulation!', response.message, "success");
+                }
             } else if (response.status == 'error'){
-                // error
-            } else {
-                // unknown response
+                // error & unknown response
+                swal('Oops...', "Something went wrong! Try later", "error");
             }
         }
     });
@@ -124,7 +145,7 @@ $(function () {
                     case 'form-payment':
                         if (result.status == 'success') {
                             var data = result.data;
-                            if (data.amount > 0) {
+                            if (parseInt(data.amount) > 0) {
                                 $('#amount').text(data.amount);
                                 swal('Congratulation!', result.message, "success");
                                 $('ul.nav a[href="#createOrder"]').click();
@@ -135,8 +156,16 @@ $(function () {
                     case 'form-createOrder':
                         if (result.status == 'success') {
                             var data = result.data;
-                            swal('Congratulation!', result.message, "success");
                             clearForm(form);
+                            swal({
+                                title: 'Congratulation!',
+                                text: result.message,
+                                type: "success"
+                            }, function(){
+                                if (data.html){
+                                    $('#order-list').prepend(data.html).fadeIn('slow');
+                                }
+                            });
                         }
                         break;
                 }
