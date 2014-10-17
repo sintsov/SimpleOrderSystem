@@ -58,7 +58,7 @@
                             ?>
                             <div class="alert alert-disclemer">To create an order you have to make a payment</div>
                         <? }?>
-                        <input class="btn btn-success btn-lg" <?=$send?> value="Create" type="submit">
+                        <input id="create" class="btn btn-success btn-lg" <?=$send?> value="Create" type="submit">
                     </form>
                 </div>
                 <div class="tab-pane fade" id="payment">

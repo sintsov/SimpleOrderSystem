@@ -32,6 +32,7 @@ CREATE TABLE `accounts` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int(10) unsigned NOT NULL,
   `balance` decimal(7, 2) NOT NULL,
+  `reserve` decimal(7, 2) NOT NULL, -- need reserve fund for custom
   PRIMARY KEY (`id`),
   FOREIGN KEY (`user_id`) REFERENCES users(`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;

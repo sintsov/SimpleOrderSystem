@@ -68,6 +68,12 @@ var makeIt = function (form){
                 if (parseInt(data.amount) > 0) {
                     $('#amount').text(data.amount);
                     swal('Congratulation!', response.message, "success");
+                    var id = $(form).find('input[name=order-id]').val();
+                    var $orderItem = $('div[data-id='+id+']');
+                    var $photo = $orderItem.next()
+
+                    $orderItem.hide().fadeOut('slow');
+                    $photo.hide().next().hide();
                 }
             } else if (response.status == 'error'){
                 // error & unknown response
@@ -135,6 +141,8 @@ $(function () {
                                 swal('Congratulation!', result.message, "success");
                                 $('ul.nav a[href="#createOrder"]').click();
                                 clearForm(form);
+                                $('.alert-disclemer').remove();
+                                $('#create').removeAttr('disabled');
                             }
                         }
                         break;
@@ -148,7 +156,10 @@ $(function () {
                                 type: "success"
                             }, function(){
                                 if (data.html){
-                                    $('#order-list').prepend(data.html).fadeIn('slow');
+                                    $('#order-list')
+                                        .prepend(data.html)
+                                        .fadeIn('slow')
+                                        .animate({ scrollTop: 0 }, "slow");
                                 }
                             });
                         }

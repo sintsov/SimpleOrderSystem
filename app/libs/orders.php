@@ -16,8 +16,21 @@ function createOrder(){
         if (requiredFields($allowfieldList) === true) {
             $fieldList = prepareData($allowfieldList);
             if (validateMoney($fieldList['cost'])) {
-                $fields = prepareSQLData($fieldList);
 
+                // need reconciliation reserv and balance
+                $realBalance = getUserInfo('balance') - getUserInfo('reserve');
+                if ($fieldList['cost'] > $realBalance){
+                    error("Sorry, you don't have enough funds on the account for this procedure. Available funds: {$realBalance} (balance: " .  getUserInfo('balance') .", reserve: " . getUserInfo('reserve'). ")");
+                    die;
+                }
+
+                $reserve = getUserInfo('reserve')+$fieldList['cost'];
+
+                $fields = prepareSQLData($fieldList);
+                // set autocommit to off
+                mysqli_autocommit($db, false);
+
+                // create new order
                 $query = sprintf("INSERT INTO orders (status, customer, cost, title, text, created_at)
                                     VALUES ('%s', '%s', '%s', '%s', '%s', '%s')",
                     1,
@@ -27,9 +40,19 @@ function createOrder(){
                     $fields['text'],
                     time()
                 );
-                $result = mysqli_query($db, $query);
-                if ($result === true) {
-                    $order[] = getOrder(mysqli_insert_id($db));
+                sqlQuery($db, $query);
+
+                $orderId = mysqli_insert_id($db);
+
+                // make reserve
+                $query = "UPDATE accounts AS a JOIN (SELECT * FROM accounts WHERE user_id = '" . $userId . "') AS b
+                            SET a.reserve = b.reserve+". $fields['cost'] ." WHERE a.user_id = '" . $userId . "'";
+                sqlQuery($db, $query);
+
+                // commit
+                if (mysqli_commit($db)) {
+                    setUserInfo('reserve', $reserve);
+                    $order[] = getOrder($orderId);
                     showOrders($order, 'Order successfully create');
                 } else {
                     error('Datebase query error: ' . mysqli_error($db));
@@ -74,22 +97,12 @@ function makeOrder(){
 
             sqlQuery($db, $query);
 
-            // TODO: transaction log (double entry)
-            // ....
-
-            $transactionID = 1;
-
             if (!isset($config['application']['commission'])){
                 error('Not set system comission');
                 die;
             }
             $comission = $order['cost']*$config['application']['commission'];
             $cost = $order['cost'] - $comission;
-
-            // update balance customer
-            $query = "UPDATE accounts AS a JOIN (SELECT * FROM accounts WHERE user_id = '" . $order['customer'] . "') AS b
-                            SET a.balance = b.balance-". $order['cost'] ." WHERE a.user_id = '" . $order['customer'] . "'";
-            sqlQuery($db, $query);
 
             $balance = getUserInfo('balance');
             $totalBalance = $balance + $cost;
@@ -101,12 +114,38 @@ function makeOrder(){
                    error('Datebase query error: ' . mysqli_error($db));
                    die;
                }
+
+               // associate a user with his account
+               $query = "UPDATE users SET account_id = '" . $accountId . "', modified_at = '" . time() . "'
+                                    WHERE id = '" . $userId . "'";
+               sqlQuery($db, $query);
+
             } else {
                 $accountId = getUserInfo('account_id');
                 // update balance employee
                 $query = "UPDATE accounts SET balance = '". $totalBalance ."' WHERE id = '" . $accountId . "'";
                 sqlQuery($db, $query);
             }
+
+            // get customer
+            $customer = getUser($order['customer']);
+            if ($customer === false){
+                error('Customer info not found');
+                die;
+            }
+
+            // transaction log
+            $query = "INSERT INTO transactions (credit, debit, amount, date)
+                        VALUES ('" . $customer['account_id'] . "', '" . $accountId . "', '" . $totalBalance . "', '" . time() ."')";
+            sqlQuery($db, $query);
+
+            $transactionID = mysqli_insert_id($db);
+
+            // update balance & reserve customer
+            $query = "UPDATE accounts AS a JOIN (SELECT * FROM accounts WHERE user_id = '" . $order['customer'] . "') AS b
+                            SET a.balance = b.balance-". $order['cost'] .", a.reserve = b.reserve-" . $order['cost'] ."
+                                WHERE a.user_id = '" . $order['customer'] . "'";
+            sqlQuery($db, $query);
 
             // system comission
             $query = "INSERT INTO system_account (amount, transaction_id, comission)

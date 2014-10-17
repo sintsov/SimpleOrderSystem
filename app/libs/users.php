@@ -40,6 +40,7 @@ function userJoin(){
                                     'role_id' => $fields['role'],
                                     'account_id' => null,
                                     'balance' => 0,
+                                    'reserve' => 0
                                 )
                             );
                         } else {
@@ -86,7 +87,8 @@ function userSignin(){
                             'email' => $row['email'],
                             'role_id' => $row['role_id'],
                             'account_id' => $row['account_id'],
-                            'balance' => is_null($row['account_id']) ? $row['account_id'] : getBalanceByAccountId($row['account_id']),
+                            'balance' => is_null($row['account_id']) ? 0 : getBalanceByAccountId($row['account_id']),
+                            'reserve' => is_null($row['account_id']) ? 0 : getReserveByAccountId($row['account_id'])
                         )
                     );
                 }
@@ -112,6 +114,18 @@ function getBalanceByAccountId($accountId){
         $result = mysqli_query($db, $query);
         while ($row = mysqli_fetch_assoc($result)) {
             return $row['balance'];
+        }
+    }
+    return false;
+}
+
+function getReserveByAccountId($accountId){
+    global $db;
+    if (is_numeric($accountId)) {
+        $query = "SELECT reserve FROM accounts WHERE id='" . $accountId . "'";
+        $result = mysqli_query($db, $query);
+        while ($row = mysqli_fetch_assoc($result)) {
+            return $row['reserve'];
         }
     }
     return false;
@@ -231,9 +245,15 @@ function paymentUser(){
                     $totalBalance = getBalanceByAccountId($accountId);
                 }
 
-                // TODO: transaction log (double entry)
-                // ....
-
+                // store transaction
+                $query = sprintf("INSERT INTO external_transactions (credit, payment_system, amount, date)
+                                          VALUES ('%s', '%s', '%s', '%s')",
+                    $accountId,
+                    $fields['payment_id'],
+                    $fields['total'],
+                    time()
+                );
+                sqlQuery($db, $query);
 
                 if (mysqli_commit($db)) {
 
@@ -271,10 +291,22 @@ function paymentUser(){
 function createNewAccount($userId, $balance){
     global $db;
 
-    $query = sprintf("INSERT INTO accounts (user_id, balance) VALUES ('%s', '%s')",  $userId, $balance);
+    $query = sprintf("INSERT INTO accounts (user_id, balance, reserve) VALUES ('%s', '%s', '0')",  $userId, $balance);
     $result = mysqli_query($db, $query);
     if ($result !== true){
         return false;
     } else
         return mysqli_insert_id($db);
+}
+
+function getUser($userId){
+    global $db;
+
+    $query = sprintf("SELECT * FROM users WHERE id='%s'", mysqli_real_escape_string($db, $userId));
+    $result = mysqli_query($db, $query);
+    while ($row = mysqli_fetch_assoc($result)) {
+        return $row;
+    }
+
+    return false;
 }
