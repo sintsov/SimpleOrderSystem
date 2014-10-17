@@ -8,7 +8,7 @@
 if (isset($orders)){
     foreach ($orders as $order) {
         ?>
-        <div class="col-sm-10 order" data-id="<?=$order['id']?>">
+        <div class="col-sm-10 order" data-id="<?=$order['id']?>" <?=isset($order['isLastOrder']) ? 'data-lastOrder="1"' : '';?>>
             <h3><?=$order['title']?></h3>
             <h4><span class="label label-default">$ <?=getPrice($order['cost'])?></span></h4>
             <p><?=$order['text']?></p>

@@ -21,6 +21,7 @@ $config = array(
         ),
     ),
     'application' => array(
-        'commission' => '0.03'
+        'commission' => '0.03',
+        'limit' => '5'
     )
 );

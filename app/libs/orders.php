@@ -19,7 +19,7 @@ function createOrder(){
                 $fields = prepareSQLData($fieldList);
 
                 $query = sprintf("INSERT INTO orders (status, customer, cost, title, text, created_at)
-                                          VALUES ('%s', '%s', '%s', '%s', '%s', '%s')",
+                                    VALUES ('%s', '%s', '%s', '%s', '%s', '%s')",
                     1,
                     $userId,
                     $fields['cost'],
@@ -140,7 +140,11 @@ function makeOrder(){
 /**
  * List of the order
  */
-function orderList($lastId = 0, $limit = 100){
+function orderList($lastId = 0, $limit = 150){
+    global $config;
+
+    $limit = (isset($config['application']['limit'])) ? $config['application']['limit'] : $limit;
+
     $orders = getOrders($lastId, $limit);
 
     if (count($orders) == 0) {
@@ -171,25 +175,40 @@ function showOrders($orders, $message){
     ));
 }
 
-function getOrders($lastId = 0, $limit = 100){
+function getOrders($lastId = 0, $limit = 150){
     global $db;
+    global $config;
+
+    $limit = (isset($config['application']['limit'])) ? $config['application']['limit'] : $limit;
+
     $orders = array();
 
-    // select only new orders
     if ($lastId > 0) {
-        //
+        $query = sprintf("SELECT a.id, a.customer, a.cost, a.title, a.text, a.created_at FROM orders as a
+                            JOIN (SELECT id FROM orders WHERE status='1' ORDER BY id DESC LIMIT %s, %s) as b ON b.id = a.id",
+            mysqli_real_escape_string($db, $lastId),
+            $limit
+        );
     } else {
         $query = "SELECT id, customer, cost, title, text, created_at FROM orders WHERE status='1' ORDER BY id DESC LIMIT " . $limit;
-        $result = mysqli_query($db, $query);
 
-        if (!$result) {
-            error('Datebase query error: ' . mysqli_error($db));
-            die;
-        }
+    }
 
-        while ($row = mysqli_fetch_assoc($result)) {
-            $orders[] = $row;
+    $result = mysqli_query($db, $query);
+    if (!$result) {
+        error('Datebase query error: ' . mysqli_error($db));
+        die;
+    }
+    $total = mysqli_num_rows($result);
+    $isLast = ($total < $limit) ? true : false;
+
+    $index = 0;
+    while ($row = mysqli_fetch_assoc($result)) {
+        $index++;
+        if ($isLast && $index == $total){
+            $row['isLastOrder'] = true;
         }
+        $orders[] = $row;
     }
 
     return $orders;

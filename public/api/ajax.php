@@ -32,7 +32,11 @@ if (!empty($_POST['action'])) {
             createOrder();
             break;
         case '/order/list/':
-            orderList();
+            if (isset($_POST['lastId']) && !empty($_POST['action']) && is_numeric($_POST['lastId'])){
+                orderList($_POST['lastId']);
+            } else {
+                orderList();
+            }
             break;
         case '/order/makeit/':
             makeOrder();
